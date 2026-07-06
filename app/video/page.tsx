@@ -2,18 +2,20 @@
 
 import { HlsPlayer } from '@/components/HlsPlayer'
 import { Video, videoService } from '@/services/api'
-import { useParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
 
-export default function VideoPage() {
-	const params = useParams()
-	const id = params?.id as string
+// Внутрішній компонент, який працює з URL-параметрами
+function VideoContent() {
+	const searchParams = useSearchParams()
+	const id = searchParams?.get('id')
 
 	const [video, setVideo] = useState<Video | null>(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(false)
 
 	useEffect(() => {
+		// Чекаємо, поки з'явиться ID
 		if (!id) return
 
 		const fetchVideo = async () => {
@@ -31,7 +33,7 @@ export default function VideoPage() {
 		fetchVideo()
 	}, [id])
 
-	if (loading) {
+	if (loading || !id) {
 		return (
 			<div className='flex h-screen items-center justify-center'>
 				<h1 className='text-xl font-semibold text-gray-500'>Loading video...</h1>
@@ -72,5 +74,19 @@ export default function VideoPage() {
 				</div>
 			)}
 		</div>
+	)
+}
+
+export default function VideoPage() {
+	return (
+		<Suspense
+			fallback={
+				<div className='flex h-screen items-center justify-center'>
+					<h1 className='text-xl font-semibold text-gray-500'>Initializing...</h1>
+				</div>
+			}
+		>
+			<VideoContent />
+		</Suspense>
 	)
 }
