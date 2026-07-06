@@ -1,17 +1,45 @@
+'use client'
+
 import { HlsPlayer } from '@/components/HlsPlayer'
 import { Video, videoService } from '@/services/api'
+import { useParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
-interface VideoPageProps {
-	params: Promise<{ id: string }>
-}
+export default function VideoPage() {
+	const params = useParams()
+	const id = params?.id as string
 
-export default async function VideoPage({ params }: VideoPageProps) {
-	const { id } = await params
-	let video: Video | null = null
+	const [video, setVideo] = useState<Video | null>(null)
+	const [loading, setLoading] = useState(true)
+	const [error, setError] = useState(false)
 
-	try {
-		video = await videoService.getVideoById(id)
-	} catch (error) {
+	useEffect(() => {
+		if (!id) return
+
+		const fetchVideo = async () => {
+			try {
+				setLoading(true)
+				const data = await videoService.getVideoById(id)
+				setVideo(data)
+			} catch (err) {
+				setError(true)
+			} finally {
+				setLoading(false)
+			}
+		}
+
+		fetchVideo()
+	}, [id])
+
+	if (loading) {
+		return (
+			<div className='flex h-screen items-center justify-center'>
+				<h1 className='text-xl font-semibold text-gray-500'>Loading video...</h1>
+			</div>
+		)
+	}
+
+	if (error) {
 		return (
 			<div className='flex h-screen items-center justify-center'>
 				<h1 className='text-xl font-semibold text-red-500'>Error loading video</h1>
